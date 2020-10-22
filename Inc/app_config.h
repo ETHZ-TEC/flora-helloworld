@@ -17,8 +17,8 @@
 
 /* general */
 #define NODE_ID                         2
-#define BASEBOARD                       0               /* set to 1 if the comboard will be installed on a baseboard */
-#define WAKEUP_PERIOD_S                 10              /* period at which the hello world task will run */
+#define BASEBOARD                       1               /* set to 1 if the comboard will be installed on a baseboard */
+#define WAKEUP_PERIOD_S                 60              /* period at which the hello world task will run */
 #define LOW_POWER_MODE                  LP_MODE_STOP2   /* low-power mode to use between rounds during periods of inactivity */
 #define LPM_DISABLE_GPIO_CLOCKS         0               /* set to 1 to disable GPIO clocks in low-power mode (-> no GPIO tracing possible) */
 #define BASEBOARD_TREQ_WATCHDOG         3600            /* if != 0, the baseboard will be power-cycled if no time request has been received within the specified #seconds */
