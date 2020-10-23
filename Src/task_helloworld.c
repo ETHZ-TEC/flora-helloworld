@@ -38,17 +38,6 @@ void task_helloworld(void const * argument)
 {
   LOG_VERBOSE("hello world task has started");
 
-  // perform CAD
-  /*
-  while (1) {
-    if (!radio_is_channel_free(RADIO_LORA_SF_TO_MODULATION_INDEX(7), 100)) {
-      LOG_DEBUG("channel is occupied!");
-    } else {
-      LOG_DEBUG("channel is free");
-    }
-  }
-  */
-
   // start the task in 1s
   lptimer_set(lptimer_now() + LPTIMER_S_TO_TICKS(1), periodic_cb);
 
