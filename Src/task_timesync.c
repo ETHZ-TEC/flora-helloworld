@@ -144,7 +144,7 @@ void task_timesync(void const * argument)
         LOG_WARNING("power-cycling baseboard (TREQ watchdog)");
         PIN_CLR(BASEBOARD_ENABLE);
         /* enable pin must be kept low for ~1s -> schedule pin release */
-        if (!schedule_command(0, CMD_SX1262_BASEBOARD_ENABLE, 0)) {  /* scheduled time can be 0, i.e. it will be executed in the next post_task run */
+        if (!schedule_command((get_time(0) / 1000000) + 2, CMD_SX1262_BASEBOARD_ENABLE, 0)) {
           /* we must wait and release the reset here */
           LOG_WARNING("failed to schedule baseboard enable");
           delay_us(60000);

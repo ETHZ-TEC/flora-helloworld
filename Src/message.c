@@ -23,6 +23,7 @@ LIST_CREATE(pending_commands, sizeof(scheduled_cmd_t), COMMAND_QUEUE_SIZE);
 
 bool process_command(const dpp_command_t* cmd, const dpp_header_t* hdr)
 {
+  bool cfg_changed = false;
 #if BASEBOARD
   scheduled_cmd_t sched_cmd;
 #endif /* BASEBOARD */
@@ -72,7 +73,9 @@ bool process_command(const dpp_command_t* cmd, const dpp_header_t* hdr)
       }
     } else {
       config.bb_en.starttime = 0;
+      LOG_INFO("periodic baseboard enable cleared");
     }
+    cfg_changed = true;
     break;
 
   case CMD_SX1262_BASEBOARD_POWER_EXT3:
@@ -90,6 +93,12 @@ bool process_command(const dpp_command_t* cmd, const dpp_header_t* hdr)
     /* unknown command -> command processing failed */
     return false;
     break;
+  }
+
+  if (cfg_changed) {
+    if (!nvcfg_save(&config)) {
+      LOG_ERROR("failed to save config");
+    }
   }
 
   return true;
