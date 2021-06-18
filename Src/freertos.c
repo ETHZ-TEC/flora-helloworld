@@ -108,7 +108,7 @@ void vApplicationIdleHook( void )
   }
 
   /* if the application ends up in the RESET state, something went wrong -> reset the MCU */
-  if (get_opmode() == OP_MODE_RESET) {
+  if (lpm_get_opmode() == OP_MODE_RESET) {
     NVIC_SystemReset();
   }
 

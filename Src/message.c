@@ -65,7 +65,7 @@ bool process_command(const dpp_command_t* cmd, const dpp_header_t* hdr)
   case CMD_SX1262_BASEBOARD_ENABLE_PERIODIC:
     config.bb_en.period = (uint32_t)cmd->arg16[1] * 60;  /* convert to seconds */
     if (config.bb_en.period > 0) {
-      config.bb_en.starttime = get_next_timestamp_at_daytime(0, cmd->arg[0], cmd->arg[1], 0);
+      config.bb_en.starttime = rtc_get_next_timestamp_at_daytime(0, cmd->arg[0], cmd->arg[1], 0);
       if (config.bb_en.starttime > 0) {
         LOG_INFO("periodic baseboard enable scheduled (next: %u  period: %us)", config.bb_en.starttime, config.bb_en.period);
       } else {
@@ -261,30 +261,4 @@ bool schedule_command(uint32_t sched_time, dpp_command_type_t cmd_type, uint16_t
 }
 
 #endif /* BASEBOARD */
-
-
-uint32_t get_next_timestamp_at_daytime(time_t curr_time, uint32_t hour, uint32_t minute, uint32_t second)
-{
-  struct tm ts;
-
-  /* make sure the values are within the valid range */
-  if (hour > 23 || minute > 59 || second > 59) {
-    return 0;
-  }
-  /* if no time specified, fetch current time */
-  if (curr_time == 0) {
-    curr_time = (time_t)(get_time(0) / 1000000);
-  }
-  /* split up the UNIX timestamp into components */
-  gmtime_r(&curr_time, &ts);
-  ts.tm_hour = hour;
-  ts.tm_min  = minute;
-  ts.tm_sec  = second;
-  /* convert back to UNIX timestamp */
-  uint32_t timestamp = mktime(&ts);
-  if (timestamp <= curr_time) {
-    timestamp += 86400;           /* add one day */
-  }
-  return timestamp;
-}
 

@@ -29,7 +29,7 @@ extern TaskHandle_t  xTaskHandle_timesync;
 
 void periodic_cb(void)
 {
-  update_opmode(OP_MODE_EVT_WAKEUP);
+  lpm_update_opmode(OP_MODE_EVT_WAKEUP);
   vTaskNotifyGiveFromISR(xTaskHandle_helloworld, 0);
 }
 
@@ -58,7 +58,7 @@ void task_helloworld(void const * argument)
     xTaskNotifyGive(xTaskHandle_bolt);
     xTaskNotifyGive(xTaskHandle_timesync);
 
-    update_opmode(OP_MODE_EVT_DONE);      // signal the LPM state machine to go to STOP mode
+    lpm_update_opmode(OP_MODE_EVT_DONE);      // signal the LPM state machine to go to STOP mode
   }
 }
 

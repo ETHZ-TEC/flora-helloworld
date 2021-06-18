@@ -109,7 +109,7 @@ void GPIO_PIN_3_Callback(void)
     captured_timestamp  = lptimer_now() - 1;   /* subtract wakeup + ISR + function call delays (measured to ~20us) */
     timestamp_requested = true;
   }
-  update_opmode(OP_MODE_EVT_WAKEUP);
+  lpm_update_opmode(OP_MODE_EVT_WAKEUP);
   LOG_VERBOSE("timestamp captured (%llu)", captured_timestamp);
   vTaskNotifyGiveFromISR(xTaskHandle_helloworld, 0);
 }
