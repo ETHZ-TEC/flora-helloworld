@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2021, ETH Zurich, Computer Engineering Group (TEC)
+ * Copyright (c) 2020 - 2022, ETH Zurich, Computer Engineering Group (TEC)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,8 +77,6 @@ void task_bolt(void const * argument)
     if (max_read_cnt < BOLT_MAX_READ_COUNT) {
       LOG_VERBOSE("%lu msg read from BOLT", BOLT_MAX_READ_COUNT - max_read_cnt);
     }
-
-    //LOG_VERBOSE("bolt task executed");
   }
 }
 

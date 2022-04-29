@@ -49,7 +49,7 @@ extern TaskHandle_t      xTaskHandle_helloworld;
 static uint64_t unix_timestamp        = 0;        /* UNIX timestamp of the last sync point, in us */
 static uint64_t local_timestamp       = 0;        /* local timestamp of the last sync point, in timer ticks (source node: lptimer, base station: hs timer) */
 static uint64_t captured_timestamp    = 0;        /* captured timestamp of the last time request (COM_TREQ rising edge) in lptimer ticks -> only used on source nodes */
-static int32_t  average_drift         = 0;        /* average drift of the local timer towards the time master, in ppm */
+static int32_t  average_drift_ppm     = 0;        /* average drift of the local timer towards the time master, in ppm */
 static bool     timestamp_updated     = false;
 static bool     timestamp_requested   = false;
 
@@ -65,29 +65,29 @@ static void update_time(void)
     /* calculate the drift */
     if (prev_unix_timestamp) {
       int64_t master_ts_diff_us = (unix_timestamp - prev_unix_timestamp);
-      int64_t local_ts_diff_us = ((uint64_t)(local_timestamp - prev_local_timestamp) * 1000000 / LPTIMER_SECOND);
-      int32_t drift = (int64_t)(local_ts_diff_us - master_ts_diff_us) * 1000000 / master_ts_diff_us;
+      int64_t local_ts_diff_us  = ((uint64_t)(local_timestamp - prev_local_timestamp) * 1000000 / LPTIMER_SECOND);
+      int32_t drift_ppm         = (int64_t)(local_ts_diff_us - master_ts_diff_us) * 1000000 / master_ts_diff_us;
       /* drift has to be within a certain range */
-      if (drift < TIMESTAMP_MAX_DRIFT && drift > -TIMESTAMP_MAX_DRIFT) {
-        if (drift > TIMESTAMP_TYPICAL_DRIFT || drift < -TIMESTAMP_TYPICAL_DRIFT) {
+      if (drift_ppm < TIMESTAMP_MAX_DRIFT_PPM && drift_ppm > -TIMESTAMP_MAX_DRIFT_PPM) {
+        if (drift_ppm > TIMESTAMP_TYPICAL_DRIFT_PPM || drift_ppm < -TIMESTAMP_TYPICAL_DRIFT_PPM) {
           LOG_WARNING("drift is larger than usual");
         }
-        if (average_drift == 0) {
-          average_drift = drift;
+        if (average_drift_ppm == 0) {
+          average_drift_ppm = drift_ppm;
         } else {
-          average_drift = (average_drift + drift) / 2;
+          average_drift_ppm = (average_drift_ppm + drift_ppm) / 2;
         }
         /* make sure the drift does not exceed the maximum allowed value */
-        if (average_drift > TIMESTAMP_MAX_DRIFT) {
-          average_drift = TIMESTAMP_MAX_DRIFT;
-        } else if (average_drift < -TIMESTAMP_MAX_DRIFT) {
-          average_drift = -TIMESTAMP_MAX_DRIFT;
+        if (average_drift_ppm > TIMESTAMP_MAX_DRIFT_PPM) {
+          average_drift_ppm = TIMESTAMP_MAX_DRIFT_PPM;
+        } else if (average_drift_ppm < -TIMESTAMP_MAX_DRIFT_PPM) {
+          average_drift_ppm = -TIMESTAMP_MAX_DRIFT_PPM;
         }
         /* note: a negative drift means the local time runs slower than the master clock */
-        LOG_VERBOSE("current drift: %ldppm   average drift: %ldppm", drift, average_drift);
+        LOG_VERBOSE("current drift: %ldppm   average drift: %ldppm", drift_ppm, average_drift_ppm);
 
       } else {
-        LOG_WARNING("drift is too large (%ldppm)", drift);
+        LOG_WARNING("drift is too large (%ldppm)", drift_ppm);
       }
     }
     LOG_VERBOSE("time updated");
@@ -123,7 +123,7 @@ uint64_t get_time(uint64_t at_time)
   if (at_time == 0) {
     at_time = lptimer_now();
   }
-  return unix_timestamp + (((int64_t)at_time - (int64_t)local_timestamp) * (1000000LL - average_drift) / LPTIMER_SECOND);
+  return unix_timestamp + (((int64_t)at_time - (int64_t)local_timestamp) * (1000000LL - average_drift_ppm) / LPTIMER_SECOND);
 }
 
 
@@ -153,26 +153,26 @@ void task_timesync(void const * argument)
 
 #if BASEBOARD_TREQ_WATCHDOG && BASEBOARD
     static uint64_t last_treq = 0;
+
     if (captured_timestamp > last_treq) {
       last_treq = captured_timestamp;
     }
     /* only use time request watchdog when baseboard is enabled */
     if (PIN_STATE(BASEBOARD_ENABLE)) {
-      bool powercycle = false;
+
       /* check when was the last time we got a time request */
       if (LPTIMER_TICKS_TO_S(lptimer_now() - last_treq) > BASEBOARD_TREQ_WATCHDOG) {
         last_treq = lptimer_now();
-        powercycle = true;
-      }
-      if (powercycle) {
+
         /* power cycle the baseboard */
         LOG_WARNING("power-cycling baseboard (TREQ watchdog)");
         PIN_CLR(BASEBOARD_ENABLE);
-        /* enable pin must be kept low for ~1s -> schedule pin release */
-        if (!schedule_command((get_time(0) / 1000000) + 2, CMD_SX1262_BASEBOARD_ENABLE, 0)) {
+
+        /* enable pin must be kept low for ~1s -> schedule pin release (vTaskDelay won't work if LP_MODE_STOP2 is used) */
+        if (!schedule_command(2, CMD_SX1262_BASEBOARD_ENABLE, 0)) {
           /* we must wait and release the reset here */
           LOG_WARNING("failed to schedule baseboard enable");
-          delay_us(60000);
+          delay_us(100000);
           PIN_SET(BASEBOARD_ENABLE);
         }
       }
@@ -180,8 +180,6 @@ void task_timesync(void const * argument)
       last_treq = lptimer_now();
     }
 #endif /* BASEBOARD_TREQ_WATCHDOG */
-
-    //LOG_VERBOSE("timesync executed");
   }
 }
 

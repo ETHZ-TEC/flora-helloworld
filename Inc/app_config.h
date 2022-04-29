@@ -44,11 +44,11 @@
 #define WAKEUP_PERIOD_S                 60              /* period at which the hello world task will run */
 #define LOW_POWER_MODE                  LP_MODE_STOP2   /* low-power mode to use between rounds during periods of inactivity */
 #define LPM_DISABLE_GPIO_CLOCKS         0               /* set to 1 to disable GPIO clocks in low-power mode (-> no GPIO tracing possible) */
-#define BASEBOARD_TREQ_WATCHDOG         3600            /* if != 0, the baseboard will be power-cycled if no time request has been received within the specified #seconds */
+#define BASEBOARD_TREQ_WATCHDOG         900             /* if != 0, the baseboard will be power-cycled if no time request has been received within the specified #seconds */
 
 /* timesync */
-#define TIMESTAMP_TYPICAL_DRIFT         40    /* typical drift +/- in ppm (if exceeded, a warning will be issued) */
-#define TIMESTAMP_MAX_DRIFT             100   /* max. allowed drift in ppm (higher values will be capped) */
+#define TIMESTAMP_TYPICAL_DRIFT_PPM     40    /* typical drift +/- in ppm (if exceeded, a warning will be issued) */
+#define TIMESTAMP_MAX_DRIFT_PPM         100   /* max. allowed drift in ppm (higher values will be capped) */
 
 /* memory */
 #define BOLT_TASK_STACK_SIZE            256   /* in # words of 4 bytes */

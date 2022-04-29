@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2021, ETH Zurich, Computer Engineering Group (TEC)
+ * Copyright (c) 2020 - 2022, ETH Zurich, Computer Engineering Group (TEC)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,27 +57,35 @@ void task_helloworld(void const * argument)
 {
   LOG_VERBOSE("hello world task has started");
 
-  // start the task in 1s
+  /* start the task in 1s */
   lptimer_set(lptimer_now() + LPTIMER_S_TO_TICKS(1), periodic_cb);
 
   for (;;)
   {
-    // wait until task gets unblocked
+    /* wait until task gets unblocked */
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    LOG_VERBOSE("hello world! (%lu)", (uint32_t)(get_time(0) / 1000000));
+    uint32_t t_now = get_time(0) / 1000000;
+    LOG_VERBOSE("hello world! %lu", t_now);
     led_on(LED_SYSTEM);
     vTaskDelay(pdMS_TO_TICKS(100));
     led_off(LED_SYSTEM);
 
-    // set a timer to trigger the next wakeup
+#if BASEBOARD
+    /* execute pending baseboard commands */
+    process_scheduled_commands();
+#endif
+
+    /* set a timer to trigger the next wakeup */
     lptimer_set(lptimer_now() + LPTIMER_S_TO_TICKS(WAKEUP_PERIOD_S), periodic_cb);
 
-    // poll the BOLT and debug tasks
+    /* poll the BOLT and debug tasks */
     xTaskNotifyGive(xTaskHandle_bolt);
     xTaskNotifyGive(xTaskHandle_timesync);
+    /* note: task will be interrupted at this point and resumes once the bolt and timesync tasks yield */
 
-    lpm_update_opmode(OP_MODE_EVT_DONE);      // signal the LPM state machine to go to STOP mode
+    /* signal the LPM state machine to go to STOP mode */
+    lpm_update_opmode(OP_MODE_EVT_DONE);
   }
 }
 
