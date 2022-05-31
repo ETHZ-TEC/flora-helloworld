@@ -193,13 +193,14 @@ void process_scheduled_commands(void)
       switch (next_cmd->type) {
 
         case CMD_SX1262_BASEBOARD_ENABLE:
-          PIN_SET(BASEBOARD_ENABLE);
+          BASEBOARD_ENABLE();
+          BASEBOARD_WAKE();
           LOG_INFO("baseboard enabled");
           generate_command(CMD_BASEBOARD_WAKEUP_MODE, next_cmd->arg);
           break;
 
         case CMD_SX1262_BASEBOARD_DISABLE:
-          PIN_CLR(BASEBOARD_ENABLE);
+          BASEBOARD_DISABLE();
           LOG_INFO("baseboard disabled");
           break;
 
@@ -217,7 +218,8 @@ void process_scheduled_commands(void)
 
   /* check the periodic baseboard enable */
   if (config.bb_en.starttime > 0 && config.bb_en.starttime <= curr_time) {
-    PIN_SET(BASEBOARD_ENABLE);
+    BASEBOARD_ENABLE();
+    BASEBOARD_WAKE();
     while (config.bb_en.period > 0 && config.bb_en.starttime < curr_time) {
       config.bb_en.starttime += config.bb_en.period;
     }

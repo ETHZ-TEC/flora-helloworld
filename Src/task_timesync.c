@@ -158,7 +158,7 @@ void task_timesync(void const * argument)
       last_treq = captured_timestamp;
     }
     /* only use time request watchdog when baseboard is enabled */
-    if (PIN_STATE(BASEBOARD_ENABLE)) {
+    if (BASEBOARD_IS_ENABLED()) {
 
       /* check when was the last time we got a time request */
       if (LPTIMER_TICKS_TO_S(lptimer_now() - last_treq) > BASEBOARD_TREQ_WATCHDOG) {
