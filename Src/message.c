@@ -182,45 +182,44 @@ bool process_message(dpp_message_t* msg, bool rcvd_from_bolt)
 
 void process_scheduled_commands(void)
 {
-  uint32_t               curr_time = rtc_get_unix_timestamp();
+  uint32_t               curr_time = get_time(0) / 1000000;
   const scheduled_cmd_t* next_cmd  = list_get_head(pending_commands);
 
-  if (next_cmd) {
-    /* there are pending commands */
-    /* anything that needs to be executed now? */
-    while (next_cmd && next_cmd->scheduled_time <= curr_time) {
+  /* there are pending commands */
+  /* anything that needs to be executed now? */
+  while (next_cmd && (next_cmd->scheduled_time <= curr_time)) {
 
-      switch (next_cmd->type) {
+    switch (next_cmd->type) {
 
-        case CMD_SX1262_BASEBOARD_ENABLE:
-          BASEBOARD_ENABLE();
-          BASEBOARD_WAKE();
-          LOG_INFO("baseboard enabled");
-          generate_command(CMD_BASEBOARD_WAKEUP_MODE, next_cmd->arg);
-          break;
+      case CMD_SX1262_BASEBOARD_ENABLE:
+        BASEBOARD_ENABLE();
+        BASEBOARD_WAKE();
+        LOG_INFO("baseboard enabled");
+        generate_command(CMD_BASEBOARD_WAKEUP_MODE, next_cmd->arg);
+        break;
 
-        case CMD_SX1262_BASEBOARD_DISABLE:
-          BASEBOARD_DISABLE();
-          LOG_INFO("baseboard disabled");
-          break;
+      case CMD_SX1262_BASEBOARD_DISABLE:
+        BASEBOARD_DISABLE();
+        LOG_INFO("baseboard disabled");
+        break;
 
-        default:
-          break;
-      }
-      list_remove_head(pending_commands, 0);
-      next_cmd = list_get_head(pending_commands);
+      default:
+        LOG_WARNING("unknown command");
+        break;
     }
+    list_remove_head(pending_commands, 0);
+    next_cmd = list_get_head(pending_commands);
   }
 
   if (next_cmd) {
-    LOG_INFO("next pending command is %u in %lus", next_cmd->type, (curr_time - next_cmd->scheduled_time));
+    LOG_INFO("next pending command is %u in %lds", next_cmd->type, next_cmd->scheduled_time - curr_time);
   }
 
   /* check the periodic baseboard enable */
-  if (config.bb_en.starttime > 0 && config.bb_en.starttime <= curr_time) {
+  if ((config.bb_en.starttime > 0) && (config.bb_en.starttime <= curr_time)) {
     BASEBOARD_ENABLE();
     BASEBOARD_WAKE();
-    while (config.bb_en.period > 0 && config.bb_en.starttime < curr_time) {
+    while ((config.bb_en.period > 0) && (config.bb_en.starttime < curr_time)) {
       config.bb_en.starttime += config.bb_en.period;
     }
     LOG_INFO("baseboard enabled (next wakeup in %us)", config.bb_en.period);
